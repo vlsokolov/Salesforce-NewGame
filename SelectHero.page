@@ -1,0 +1,56 @@
+<apex:page controller="NewGameController">    
+        
+    <apex:form id="out">       
+        <apex:pageBlock title="Select your fighter" rendered="{!ShowSelectionPanel}">
+            <apex:outputText value="You should select only one fighter. If you selected a few, the programm will create only the last selected"/>
+             <apex:pageBlockTable value="{!wrappList}"  var="item">
+                <apex:column headerValue="Race" value="{!item.Race}" />
+                <apex:column headerValue="Name" value="{!item.name}" />
+                <apex:column headerValue="Select">
+                 <apex:inputCheckbox value="{!item.isSelected}" disabled="{!item.isDisabled}"/>
+                </apex:column>
+                 <apex:column headerValue="Available in" value="{!item.timeToRelease}" />
+             </apex:pageBlockTable>
+			<apex:commandButton value="Select" action="{!FighterSelection}"/> 
+            <apex:commandButton value="Create new Fighter" action="{!ShowCreationPane}"/> 
+        </apex:pageBlock>
+        <apex:pageBlock title="Create new Fighter" rendered="{!ShowCreationPanel}" id="CreationPanel">
+            <apex:pageBlockSection >              
+            </apex:pageBlockSection> 
+            Enter the Race  <apex:inputText value="{!SelectRace}"  title="The Race should be onle the: Human, Ork, Dwarf, Elven" required="true"/> <p/> 
+            Enter the name  <apex:inputText value="{!CreatingHeroName}"  title="Enter the Name" required="true"/> <p/>
+            <apex:pageMessages ></apex:pageMessages>
+      		<apex:commandButton value="Create" action="{!CreateNewFighter}" reRender="out, CreationPanel"/>
+        </apex:pageBlock>
+        <apex:pageBlock rendered="{!ShowFightingPanel}">
+        <apex:pageBlockSection >
+        <apex:selectRadio value="{!hitPlace}" legendText="Select Hit Place" id="hitPlace" required="true">
+            <apex:selectOptions value="{!items}"/>
+            </apex:selectRadio><p/>
+        <apex:selectRadio value="{!BlockPlace}" legendText="Select Block Place" id="BlockPlace" required="true">
+            <apex:selectOptions value="{!items}"/>
+            </apex:selectRadio><p/>
+            </apex:pageBlockSection>
+            <apex:commandButton value="Fight" action="{!FightCalculation}" rerender="hit" status="status"/>  
+        </apex:pageBlock>
+        
+        <apex:pageBlock rendered="{!ShowFightResultPanel}">
+        <apex:outputPanel id="hit">
+          <apex:actionstatus id="status"> 
+             <apex:facet name="stop"> 
+               <apex:outputPanel > 
+                  <apex:outputText value="{!SUBSTITUTE(JSENCODE(fightLogMessage), '\\n', '<br/>')}" escape="false"/>
+              </apex:outputPanel> 
+            </apex:facet> 
+          </apex:actionstatus>
+            <apex:pageBlock >
+                <apex:pageBlockSection >
+            <apex:outputText value="{!first.name}"/> <apex:outputText value="{!second.name}"/> 
+            <apex:outputText value="{!first.HP}"/> <apex:outputText value="{!second.HP}"/>
+            <apex:image value="{!first.imageURL}" width="300" height="400"/> <apex:image value="{!second.imageURL}" width="300" height="400"/>        
+                </apex:pageBlockSection>
+            </apex:pageBlock>    
+    	 </apex:outputPanel> 
+            </apex:pageBlock>
+    </apex:form>
+</apex:page>

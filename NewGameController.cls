@@ -59,14 +59,14 @@ public class NewGameController
             
             wrappList.add(wrapp);
         }
-        
-        System.debug(currentDateTime);
     }
     
     public NewGameController()
     {
         ShowSelectionPanel = true;
-        SelectFromDatabase();        
+        SelectFromDatabase();  
+        ApexPages.Message myMsg = new ApexPages.Message(ApexPages.Severity.INFO,'You should select only one hero');
+        ApexPages.addMessage(myMsg);
     }
         
     /**
@@ -108,6 +108,7 @@ public class NewGameController
     public void ShowCreationPane()
     {
         ShowCreationPanel = true;
+        ShowSelectionPanel = false;
     }          
     
     /**
@@ -164,6 +165,7 @@ public class NewGameController
         
        
         ShowCreationPanel = false;
+        
             try
             {
                insert createdFighter; 

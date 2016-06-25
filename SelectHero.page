@@ -2,8 +2,8 @@
         
     <apex:form id="out">       
         <apex:pageBlock title="Select your fighter" rendered="{!ShowSelectionPanel}">
-            <apex:outputText value="You should select only one fighter. If you selected a few, the programm will create only the last selected"/>
-             <apex:pageBlockTable value="{!wrappList}"  var="item">
+            <apex:pageMessages ></apex:pageMessages>
+            <apex:pageBlockTable value="{!wrappList}"  var="item">
                 <apex:column headerValue="Race" value="{!item.Race}" />
                 <apex:column headerValue="Name" value="{!item.name}" />
                 <apex:column headerValue="Select">

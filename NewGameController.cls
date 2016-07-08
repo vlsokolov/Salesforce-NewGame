@@ -1,3 +1,18 @@
+/*
+ * This is my game. This game provide you such functionality:
+ * you can select a fighter;
+ * you can create your own hero and store it in the database,
+ * in creation process you can specify only the Name and the Race of your fighter
+ * all another characterization automatically filled depending on the chosen Race.
+ * It's prevent you from creation of SUPERHERO:);
+ * when the fight begin each round you should manually select the Hit and Block zones;
+ * when your Hero win, the programm automatically calculate his new rating.
+ * 
+ * Have a fun and enjoy this game(I spend a lot of time for it creation:)
+ * 
+ * @author Vladimir Sokolov
+ */
+
 public class NewGameController 
 {
     Public Boolean ShowCreationPanel {get; set;}
@@ -7,6 +22,7 @@ public class NewGameController
     Public Hero first {get; set;}
     Public Hero second {get; set;}
     Public Hero__c SelectedHero {get; set;}
+    Public Hero__c PcFighter {get;set;}
     Public List<Hero__c> heroes{get; set;}
     Public List<HeroWrapp> wrappList {get; set;}
     Public String SelectRace {get; set;}
@@ -32,13 +48,13 @@ public class NewGameController
     
     /**
      * In this method, we selected all records from Database and create the list of wrapped objects to 
-     * view their on the VF Page
+     * their view on the VF Page
      */
     
     public void SelectFromDatabase()
     {
         heroes = [SELECT id, Name, Race__c, Health_Points__c, Min_Dmg__c, Max_Dmg__c, Accuracy__c, 
-                  Dexterity__c, Image_URL__c, Block_Time__c
+                  Dexterity__c, Image_URL__c, Block_Time__c, Wins__c, Win_Rate__c, Stamina__c
                   FROM Hero__c ORDER BY Race__c];
         wrappList = new List<HeroWrapp>();
         
@@ -56,7 +72,10 @@ public class NewGameController
                 wrapp.isDisabled = true;
                 wrapp.timeToRelease = h.Block_Time__c;
             }
-            
+            if (h.Stamina__c <= 0)
+            {
+                wrapp.isDisabled = true;                
+            }
             wrappList.add(wrapp);
         }
     }
@@ -76,33 +95,43 @@ public class NewGameController
     
     public void FighterSelection()
     {
+      String selectedHeroId;
+      Integer countSelections = 0;  
         
       for (HeroWrapp wr: wrappList)
         {
             if (wr.isSelected)
             {
-                SelectedHero = [SELECT id, Name, Race__c, Health_Points__c, Min_Dmg__c, Max_Dmg__c, Accuracy__c, Dexterity__c, Image_URL__c
-                  					   FROM Hero__c 
-                                       WHERE id =: wr.Id];
+                countSelections ++;
+                SelectedHeroId = wr.id;
             }
         }
+
+        if (countSelections == 1)
+        {            
+		SelectedHero = [SELECT id, Name, Race__c, Health_Points__c, Min_Dmg__c, Max_Dmg__c, Accuracy__c, Dexterity__c, 
+                        Image_URL__c, Wins__c, Win_Rate__c, Stamina__c
+                  		FROM Hero__c 
+                        WHERE id =: selectedHeroId]; 
         
         first = new Hero(SelectedHero.Name, SelectedHero.Race__c, Integer.valueOf(SelectedHero.Health_Points__c),
                         Integer.valueOf(SelectedHero.Min_Dmg__c), Integer.valueOf(SelectedHero.Max_Dmg__c),
                         Integer.valueOf(SelectedHero.Accuracy__c), Integer.valueOf(SelectedHero.Dexterity__c),
-                        SelectedHero.Image_URL__c);
+                        SelectedHero.Image_URL__c, Integer.valueOf(SelectedHero.Wins__c), Integer.valueOf(SelectedHero.Win_Rate__c));
         
         Integer RandomPCFighter = Math.round(Math.floor(Math.random() * (heroes.size() - 0.5)));
-        Hero__c PcFighter = heroes.get(RandomPCFighter);
+
+        PcFighter = heroes.get(RandomPcFighter);
         second = new Hero(PcFighter.Name, PcFighter.Race__c, Integer.valueOf(PcFighter.Health_Points__c),
                         Integer.valueOf(PcFighter.Min_Dmg__c), Integer.valueOf(PcFighter.Max_Dmg__c),
                         Integer.valueOf(PcFighter.Accuracy__c), Integer.valueOf(PcFighter.Dexterity__c),
-                        PcFighter.Image_URL__c);
+                        PcFighter.Image_URL__c, Integer.valueOf(PcFighter.Wins__c), Integer.valueOf(PcFighter.Win_Rate__c));
         
         ShowFightingPanel = true;
         ShowFightResultPanel = true;
         ShowSelectionPanel = false;
         roundNumber = 1;
+        }
     }
     
     public void ShowCreationPane()
@@ -182,7 +211,7 @@ public class NewGameController
     
     /**
      * In this code block we create the list of posible hit and block zones and after user's select use it
-     * in the method FightCalculation() to create the fightLogMessage which reflect on the VF Page
+     * in the method FightCalculation() from Hero class and create the fightLogMessage which reflect on the VF Page
      */
     
     public List<SelectOption> getItems() {
@@ -253,29 +282,36 @@ public class NewGameController
         {
             fightLogMessage = second.Name + ' Win!'; 
             first.setHP(0);
-            try
-            {
-                SelectedHero.Block_Time__c = datetime.now().addDays(1);
-                update SelectedHero;
-            } catch (DMLException e)
-            {}
-			            
+            SelectedHero.Block_Time__c = datetime.now().addDays(1);
+            SelectedHero.Stamina__c -= 20;
+            update SelectedHero;
+            			            
         } else {
             if (first.getHP() >= 0 & second.getHP() <= 0)
             {
                 fightLogMessage = first.Name + ' Win!';
+                if (SelectedHero.Wins__c != null)
+                {
+                    SelectedHero.Wins__c ++;
+                } else {
+                    SelectedHero.Wins__c = 1;
+                }
+                SelectedHero.Stamina__c -= 20;
+                update SelectedHero;           
 				second.setHP(0);   
                 
             } else {
                 if (first.getHP() <= 0 & second.getHP() <= 0)
                 {
-                    fightLogMessage = 'Both heroes are death, nobody win)'; 
+                    fightLogMessage = 'Both heroes are dead, nobody win)'; 
                     first.setHP(0);
-                    second.setHP(0);                   
+                    second.setHP(0);
+                    SelectedHero.Stamina__c -= 20;
+                    update SelectedHero;
                 }
             }
         }
-        }
+        }                    
         roundNumber++;             
     }
 }
